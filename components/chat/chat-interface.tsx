@@ -4,6 +4,16 @@ import { useEffect, useRef, useState } from 'react'
 import { Button } from '@/components/ui/button'
 import { Textarea } from '@/components/ui/textarea'
 import { ScrollArea } from '@/components/ui/scroll-area'
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from '@/components/ui/alert-dialog'
 import { supabase, ChatMessage, Book } from '@/lib/supabase'
 import { useUser } from '@/hooks/use-user'
 import { Send, Loader2, Trash2 } from 'lucide-react'
@@ -23,6 +33,8 @@ export function ChatInterface({
   const [input, setInput] = useState('')
   const [loading, setLoading] = useState(false)
   const [conversationId, setConversationId] = useState<string | null>(null)
+  const [deleteIndex, setDeleteIndex] = useState<number | null>(null)
+  const [showClearDialog, setShowClearDialog] = useState(false)
   const bottomRef = useRef<HTMLDivElement>(null)
 
   useEffect(() => {
@@ -126,11 +138,13 @@ export function ChatInterface({
   const deleteMessage = async (index: number) => {
     const updated = messages.filter((_, i) => i !== index)
     setMessages(updated)
+    setDeleteIndex(null)
     await saveMessages(updated, conversationId)
   }
 
   const clearAll = async () => {
     setMessages([])
+    setShowClearDialog(false)
     if (conversationId) {
       await supabase
         .from('ai_conversations')
@@ -151,7 +165,7 @@ export function ChatInterface({
     <div className="flex flex-col h-[calc(100vh-200px)]">
       {messages.length > 0 && (
         <div className="flex justify-end mb-2">
-          <Button variant="ghost" size="sm" onClick={clearAll} className="text-xs text-muted-foreground h-7">
+          <Button variant="ghost" size="sm" onClick={() => setShowClearDialog(true)} className="text-xs text-muted-foreground h-7">
             <Trash2 className="h-3 w-3 mr-1" />
             대화 초기화
           </Button>
@@ -192,7 +206,7 @@ export function ChatInterface({
                   </p>
                 </div>
                 <button
-                  onClick={() => deleteMessage(i)}
+                  onClick={() => setDeleteIndex(i)}
                   className="absolute -top-2 -right-2 hidden group-hover:flex items-center justify-center w-5 h-5 rounded-full bg-destructive text-destructive-foreground text-xs"
                 >
                   ×
@@ -233,6 +247,36 @@ export function ChatInterface({
           {loading ? <Loader2 className="h-4 w-4 animate-spin" /> : <Send className="h-4 w-4" />}
         </Button>
       </div>
+
+      {/* 개별 메시지 삭제 확인 */}
+      <AlertDialog open={deleteIndex !== null} onOpenChange={(open) => !open && setDeleteIndex(null)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>메시지를 삭제할까요?</AlertDialogTitle>
+            <AlertDialogDescription>이 메시지가 대화 기록에서 삭제됩니다.</AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>취소</AlertDialogCancel>
+            <AlertDialogAction onClick={() => deleteIndex !== null && deleteMessage(deleteIndex)}>
+              삭제
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
+      {/* 전체 초기화 확인 */}
+      <AlertDialog open={showClearDialog} onOpenChange={setShowClearDialog}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>대화를 초기화할까요?</AlertDialogTitle>
+            <AlertDialogDescription>모든 대화 내용이 삭제되며 되돌릴 수 없습니다.</AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>취소</AlertDialogCancel>
+            <AlertDialogAction onClick={clearAll}>초기화</AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   )
 }
