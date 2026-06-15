@@ -14,17 +14,7 @@ function buildListUrl(queryType: string, ttbKey: string) {
   return url
 }
 
-const CACHE_TTL_MS = 30 * 60 * 1000 // 30분
-
-let cachedData: { bestseller: unknown[]; recommended: unknown[] } | null = null
-let cacheExpiresAt = 0
-
 export async function GET() {
-  const now = Date.now()
-  if (cachedData && now < cacheExpiresAt) {
-    return NextResponse.json(cachedData)
-  }
-
   const ttbKey = process.env.ALADIN_TTB_KEY!
 
   const [bestsellerText, blogBestText] = await Promise.all([
@@ -32,11 +22,15 @@ export async function GET() {
     aladinFetch(buildListUrl('BlogBest', ttbKey)),
   ])
 
-  cachedData = {
+  const data = {
     bestseller: parseAladinResponse(bestsellerText).item ?? [],
     recommended: parseAladinResponse(blogBestText).item ?? [],
   }
-  cacheExpiresAt = now + CACHE_TTL_MS
 
-  return NextResponse.json(cachedData)
+  return NextResponse.json(data, {
+    headers: {
+      // Vercel CDN이 1시간 캐싱, 이후 24시간은 stale 데이터 즉시 반환하며 백그라운드 갱신
+      'Cache-Control': 'public, s-maxage=3600, stale-while-revalidate=86400',
+    },
+  })
 }
