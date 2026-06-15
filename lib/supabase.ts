@@ -1,20 +1,17 @@
-import { createClient, SupabaseClient } from '@supabase/supabase-js'
+import { createClient } from '@/utils/supabase/client'
+import type { SupabaseClient } from '@supabase/supabase-js'
 
-let _client: SupabaseClient | null = null
-
-export function getSupabase() {
-  if (!_client) {
-    _client = createClient(
-      process.env.NEXT_PUBLIC_SUPABASE_URL!,
-      process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
-    )
-  }
-  return _client
+function getSupabase(): SupabaseClient {
+  return createClient()
 }
 
 export const supabase = {
   from: (...args: Parameters<SupabaseClient['from']>) => getSupabase().from(...args),
   rpc: (...args: Parameters<SupabaseClient['rpc']>) => getSupabase().rpc(...args),
+  auth: {
+    signOut: () => getSupabase().auth.signOut(),
+    getUser: () => getSupabase().auth.getUser(),
+  },
 }
 
 export type Book = {

@@ -1,10 +1,12 @@
 'use client'
 
 import Link from 'next/link'
-import { usePathname } from 'next/navigation'
+import { usePathname, useRouter } from 'next/navigation'
 import { cn } from '@/lib/utils'
 import { ThemeSelector } from './theme-selector'
-import { BookOpen, Search, Home, CalendarCheck, Target, MessageSquare } from 'lucide-react'
+import { BookOpen, Search, Home, CalendarCheck, Target, LogOut } from 'lucide-react'
+import { createClient } from '@/utils/supabase/client'
+import { useEffect, useState } from 'react'
 
 const navItems = [
   { href: '/', label: '홈', icon: Home },
@@ -16,6 +18,22 @@ const navItems = [
 
 export function Sidebar() {
   const pathname = usePathname()
+  const router = useRouter()
+  const [email, setEmail] = useState<string>('')
+
+  useEffect(() => {
+    const supabase = createClient()
+    supabase.auth.getUser().then(({ data: { user } }) => {
+      setEmail(user?.email ?? '')
+    })
+  }, [])
+
+  const handleSignOut = async () => {
+    const supabase = createClient()
+    await supabase.auth.signOut()
+    router.push('/login')
+    router.refresh()
+  }
 
   return (
     <aside className="fixed left-0 top-0 h-full w-56 bg-sidebar border-r border-sidebar-border hidden md:flex flex-col z-50">
@@ -44,9 +62,21 @@ export function Sidebar() {
         ))}
       </nav>
 
-      <div className="p-3 border-t border-sidebar-border flex items-center justify-between">
-        <span className="text-xs text-muted-foreground">테마 변경</span>
-        <ThemeSelector />
+      <div className="p-3 border-t border-sidebar-border space-y-2">
+        {email && (
+          <p className="text-xs text-muted-foreground truncate px-1">{email}</p>
+        )}
+        <div className="flex items-center justify-between">
+          <span className="text-xs text-muted-foreground">테마</span>
+          <ThemeSelector />
+        </div>
+        <button
+          onClick={handleSignOut}
+          className="flex items-center gap-2 w-full px-2 py-1.5 rounded-md text-xs text-muted-foreground hover:bg-sidebar-accent hover:text-sidebar-accent-foreground transition-colors"
+        >
+          <LogOut className="h-3.5 w-3.5" />
+          로그아웃
+        </button>
       </div>
     </aside>
   )
