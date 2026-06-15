@@ -6,9 +6,10 @@ import { Textarea } from '@/components/ui/textarea'
 import { ScrollArea } from '@/components/ui/scroll-area'
 import { supabase, ChatMessage, Book } from '@/lib/supabase'
 import { useUser } from '@/hooks/use-user'
-import { Send, Loader2 } from 'lucide-react'
+import { Send, Loader2, Trash2 } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { format } from 'date-fns'
+import { toast } from 'sonner'
 
 export function ChatInterface({
   book,
@@ -45,6 +46,22 @@ export function ChatInterface({
     bottomRef.current?.scrollIntoView({ behavior: 'smooth' })
   }, [messages])
 
+  const saveMessages = async (msgs: ChatMessage[], convId: string | null) => {
+    if (convId) {
+      await supabase
+        .from('ai_conversations')
+        .update({ messages: msgs, updated_at: new Date().toISOString() })
+        .eq('id', convId)
+    } else {
+      const { data } = await supabase
+        .from('ai_conversations')
+        .insert({ user_id: userId, book_id: book.id, messages: msgs })
+        .select()
+        .single()
+      if (data) setConversationId(data.id)
+    }
+  }
+
   const sendMessage = async () => {
     if (!input.trim() || loading || !userId) return
 
@@ -58,54 +75,69 @@ export function ChatInterface({
     setInput('')
     setLoading(true)
 
-    const res = await fetch('/api/ai/chat', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        title: book.title,
-        author: book.author,
-        description: book.description,
-        messages,
-        userMessage: userMsg.content,
-      }),
-    })
+    try {
+      const res = await fetch('/api/ai/chat', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          title: book.title,
+          author: book.author,
+          description: book.description,
+          messages,
+          userMessage: userMsg.content,
+        }),
+      })
 
-    const reader = res.body!.getReader()
-    const decoder = new TextDecoder()
-    let aiContent = ''
+      if (!res.ok || !res.body) {
+        toast.error('AI 응답에 실패했습니다.')
+        setLoading(false)
+        return
+      }
 
-    const aiMsg: ChatMessage = {
-      role: 'model',
-      content: '',
-      created_at: new Date().toISOString(),
+      const reader = res.body.getReader()
+      const decoder = new TextDecoder()
+      let aiContent = ''
+
+      const aiMsg: ChatMessage = {
+        role: 'model',
+        content: '',
+        created_at: new Date().toISOString(),
+      }
+      setMessages([...newMessages, aiMsg])
+
+      while (true) {
+        const { done, value } = await reader.read()
+        if (done) break
+        aiContent += decoder.decode(value)
+        setMessages([...newMessages, { ...aiMsg, content: aiContent }])
+      }
+
+      const finalMessages = [...newMessages, { ...aiMsg, content: aiContent }]
+      setMessages(finalMessages)
+      await saveMessages(finalMessages, conversationId)
+    } catch (err) {
+      toast.error('오류가 발생했습니다.')
+      console.error('[chat] client error:', err)
+    } finally {
+      setLoading(false)
     }
-    const withAi = [...newMessages, aiMsg]
-    setMessages(withAi)
+  }
 
-    while (true) {
-      const { done, value } = await reader.read()
-      if (done) break
-      aiContent += decoder.decode(value)
-      setMessages([...newMessages, { ...aiMsg, content: aiContent }])
-    }
+  const deleteMessage = async (index: number) => {
+    const updated = messages.filter((_, i) => i !== index)
+    setMessages(updated)
+    await saveMessages(updated, conversationId)
+  }
 
-    const finalMessages = [...newMessages, { ...aiMsg, content: aiContent }]
-
+  const clearAll = async () => {
+    setMessages([])
     if (conversationId) {
       await supabase
         .from('ai_conversations')
-        .update({ messages: finalMessages, updated_at: new Date().toISOString() })
+        .update({ messages: [], updated_at: new Date().toISOString() })
         .eq('id', conversationId)
-    } else {
-      const { data } = await supabase
-        .from('ai_conversations')
-        .insert({ user_id: userId, book_id: book.id, messages: finalMessages })
-        .select()
-        .single()
-      if (data) setConversationId(data.id)
     }
-
-    setLoading(false)
+    toast.success('대화가 초기화되었습니다.')
   }
 
   const handleKeyDown = (e: React.KeyboardEvent) => {
@@ -117,6 +149,15 @@ export function ChatInterface({
 
   return (
     <div className="flex flex-col h-[calc(100vh-200px)]">
+      {messages.length > 0 && (
+        <div className="flex justify-end mb-2">
+          <Button variant="ghost" size="sm" onClick={clearAll} className="text-xs text-muted-foreground h-7">
+            <Trash2 className="h-3 w-3 mr-1" />
+            대화 초기화
+          </Button>
+        </div>
+      )}
+
       <ScrollArea className="flex-1 pr-4">
         {messages.length === 0 && (
           <div className="text-center text-muted-foreground py-12 space-y-2">
@@ -129,25 +170,33 @@ export function ChatInterface({
           {messages.map((msg, i) => (
             <div
               key={i}
-              className={cn('flex', msg.role === 'user' ? 'justify-end' : 'justify-start')}
+              className={cn('flex group', msg.role === 'user' ? 'justify-end' : 'justify-start')}
             >
               {msg.role === 'model' && (
                 <div className="w-8 h-8 rounded-full bg-primary text-primary-foreground flex items-center justify-center text-sm mr-2 shrink-0 mt-1">
                   📖
                 </div>
               )}
-              <div
-                className={cn(
-                  'max-w-[80%] rounded-2xl px-4 py-3 text-sm',
-                  msg.role === 'user'
-                    ? 'bg-primary text-primary-foreground rounded-tr-sm'
-                    : 'bg-muted text-foreground rounded-tl-sm'
-                )}
-              >
-                <p className="whitespace-pre-wrap leading-relaxed">{msg.content}</p>
-                <p className="text-xs opacity-50 mt-1">
-                  {format(new Date(msg.created_at), 'HH:mm')}
-                </p>
+              <div className="relative max-w-[80%]">
+                <div
+                  className={cn(
+                    'rounded-2xl px-4 py-3 text-sm',
+                    msg.role === 'user'
+                      ? 'bg-primary text-primary-foreground rounded-tr-sm'
+                      : 'bg-muted text-foreground rounded-tl-sm'
+                  )}
+                >
+                  <p className="whitespace-pre-wrap leading-relaxed">{msg.content}</p>
+                  <p className="text-xs opacity-50 mt-1">
+                    {format(new Date(msg.created_at), 'HH:mm')}
+                  </p>
+                </div>
+                <button
+                  onClick={() => deleteMessage(i)}
+                  className="absolute -top-2 -right-2 hidden group-hover:flex items-center justify-center w-5 h-5 rounded-full bg-destructive text-destructive-foreground text-xs"
+                >
+                  ×
+                </button>
               </div>
             </div>
           ))}
