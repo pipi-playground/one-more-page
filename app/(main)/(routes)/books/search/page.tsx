@@ -10,6 +10,30 @@ import { supabase } from '@/lib/supabase'
 import { useUser } from '@/hooks/use-user'
 import { AladinBook } from '@/lib/aladin'
 import { Search, Loader2, BookPlus, X, TrendingUp, Sparkles } from 'lucide-react'
+
+function BookSkeleton({ rank }: { rank?: number }) {
+  return (
+    <div className="rounded-lg border bg-card p-4 flex gap-4">
+      <div className="relative shrink-0">
+        {rank !== undefined && (
+          <div className="absolute -top-2 -left-2 w-5 h-5 rounded-full bg-muted z-10" />
+        )}
+        <div className="w-[60px] h-[85px] rounded bg-muted animate-pulse" />
+      </div>
+      <div className="flex-1 space-y-2 py-1">
+        <div className="h-3.5 bg-muted rounded animate-pulse w-3/4" />
+        <div className="h-3 bg-muted rounded animate-pulse w-1/2" />
+        <div className="h-3 bg-muted rounded animate-pulse w-1/4" />
+        <div className="h-4 bg-muted rounded-full animate-pulse w-16" />
+        <div className="h-3 bg-muted rounded animate-pulse w-full" />
+        <div className="h-3 bg-muted rounded animate-pulse w-5/6" />
+      </div>
+      <div className="shrink-0">
+        <div className="h-8 w-16 bg-muted rounded animate-pulse" />
+      </div>
+    </div>
+  )
+}
 import { toast } from 'sonner'
 import {
   Dialog,
@@ -199,8 +223,8 @@ export default function BookSearchPage() {
       {!showRanking && (
         <div className="space-y-3">
           {searching ? (
-            <div className="flex justify-center py-12">
-              <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
+            <div className="space-y-3">
+              {Array.from({ length: 5 }).map((_, i) => <BookSkeleton key={i} />)}
             </div>
           ) : results.length > 0 ? (
             results.map((book) => (
@@ -225,8 +249,8 @@ export default function BookSearchPage() {
               <span className="text-xs text-muted-foreground">알라딘 주간 베스트</span>
             </div>
             {rankingLoading ? (
-              <div className="flex justify-center py-8">
-                <Loader2 className="h-5 w-5 animate-spin text-muted-foreground" />
+              <div className="space-y-3">
+                {Array.from({ length: 5 }).map((_, i) => <BookSkeleton key={i} rank={i + 1} />)}
               </div>
             ) : (
               <div className="space-y-3">
@@ -245,8 +269,8 @@ export default function BookSearchPage() {
               <span className="text-xs text-muted-foreground">블로거 추천 도서</span>
             </div>
             {rankingLoading ? (
-              <div className="flex justify-center py-8">
-                <Loader2 className="h-5 w-5 animate-spin text-muted-foreground" />
+              <div className="space-y-3">
+                {Array.from({ length: 5 }).map((_, i) => <BookSkeleton key={i} />)}
               </div>
             ) : (
               <div className="space-y-3">
