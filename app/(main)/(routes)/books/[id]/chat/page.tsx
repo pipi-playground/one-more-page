@@ -38,8 +38,9 @@ export default function ChatPage() {
   const book = userBook.book!
 
   return (
-    <div className="p-8 max-w-3xl mx-auto space-y-4">
-      <div className="flex items-center gap-2">
+    // 모바일: 하단 바(4rem) 제외한 높이, 데스크탑: 전체 화면 높이
+    <div className="flex flex-col h-[calc(100dvh-4rem)] md:h-screen overflow-hidden">
+      <div className="flex items-center gap-2 px-4 pt-4 pb-3 border-b shrink-0">
         <Link href={`/books/${id}`}>
           <Button variant="ghost" size="icon" className="h-8 w-8">
             <ChevronLeft className="h-4 w-4" />
@@ -51,7 +52,9 @@ export default function ChatPage() {
         </div>
       </div>
 
-      <ChatInterface book={book} userBookId={id} />
+      <div className="flex-1 min-h-0 overflow-hidden px-4 pb-4 max-w-3xl mx-auto w-full">
+        <ChatInterface book={book} userBookId={id} />
+      </div>
     </div>
   )
 }

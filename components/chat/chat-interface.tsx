@@ -166,7 +166,7 @@ export function ChatInterface({
 
   if (initialLoading) {
     return (
-      <div className="flex flex-col h-[calc(100vh-200px)]">
+      <div className="flex flex-col h-full">
         <div className="flex-1 space-y-4 pr-4 pt-2">
           {/* AI 메시지 스켈레톤 */}
           <div className="flex justify-start gap-2">
@@ -204,7 +204,7 @@ export function ChatInterface({
   }
 
   return (
-    <div className="flex flex-col h-[calc(100vh-200px)]">
+    <div className="flex flex-col h-full">
       {messages.length > 0 && (
         <div className="flex justify-end mb-2">
           <Button variant="ghost" size="sm" onClick={() => setShowClearDialog(true)} className="text-xs text-muted-foreground h-7">
@@ -214,7 +214,7 @@ export function ChatInterface({
         </div>
       )}
 
-      <ScrollArea className="flex-1 pr-4">
+      <ScrollArea className="flex-1 min-h-0 pr-4">
         {messages.length === 0 && (
           <div className="text-center text-muted-foreground py-12 space-y-2">
             <p className="text-4xl">💬</p>
