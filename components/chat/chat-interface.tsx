@@ -20,6 +20,7 @@ import { Send, Loader2, Trash2 } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { format } from 'date-fns'
 import { toast } from 'sonner'
+import ReactMarkdown from 'react-markdown'
 
 export function ChatInterface({
   book,
@@ -241,7 +242,13 @@ export function ChatInterface({
                       : 'bg-muted text-foreground rounded-tl-sm'
                   )}
                 >
-                  <p className="whitespace-pre-wrap leading-relaxed">{msg.content}</p>
+                  {msg.role === 'model' ? (
+                    <div className="prose prose-sm max-w-none prose-invert-none [&>*:first-child]:mt-0 [&>*:last-child]:mb-0 prose-p:my-1 prose-ul:my-1.5 prose-ol:my-1.5 prose-li:my-0 prose-strong:font-semibold prose-p:leading-relaxed">
+                      <ReactMarkdown>{msg.content}</ReactMarkdown>
+                    </div>
+                  ) : (
+                    <p className="whitespace-pre-wrap leading-relaxed">{msg.content}</p>
+                  )}
                   <p className="text-xs opacity-50 mt-1">
                     {format(new Date(msg.created_at), 'HH:mm')}
                   </p>
