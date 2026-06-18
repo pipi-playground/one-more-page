@@ -7,7 +7,7 @@ import { Textarea } from '@/components/ui/textarea'
 import { supabase, Highlight } from '@/lib/supabase'
 import { useUser } from '@/hooks/use-user'
 import { toast } from 'sonner'
-import { Plus, Trash2 } from 'lucide-react'
+import { Plus, Trash2, Pencil, Check, X } from 'lucide-react'
 
 export function HighlightForm({
   bookId,
@@ -23,6 +23,12 @@ export function HighlightForm({
   const [note, setNote] = useState('')
   const [page, setPage] = useState('')
   const [loading, setLoading] = useState(false)
+
+  const [editingId, setEditingId] = useState<string | null>(null)
+  const [editContent, setEditContent] = useState('')
+  const [editNote, setEditNote] = useState('')
+  const [editPage, setEditPage] = useState('')
+  const [editLoading, setEditLoading] = useState(false)
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -53,6 +59,39 @@ export function HighlightForm({
     await supabase.from('highlights').delete().eq('id', id)
     toast.success('삭제되었습니다.')
     onAdded()
+  }
+
+  const startEdit = (h: Highlight) => {
+    setEditingId(h.id)
+    setEditContent(h.content)
+    setEditNote(h.note ?? '')
+    setEditPage(h.page_number ? String(h.page_number) : '')
+  }
+
+  const cancelEdit = () => {
+    setEditingId(null)
+  }
+
+  const saveEdit = async (id: string) => {
+    if (!editContent.trim()) return
+    setEditLoading(true)
+    const { error } = await supabase
+      .from('highlights')
+      .update({
+        content: editContent.trim(),
+        note: editNote.trim() || null,
+        page_number: editPage ? parseInt(editPage) : null,
+      })
+      .eq('id', id)
+
+    if (error) {
+      toast.error('수정에 실패했습니다.')
+    } else {
+      toast.success('수정되었습니다.')
+      setEditingId(null)
+      onAdded()
+    }
+    setEditLoading(false)
   }
 
   return (
@@ -89,28 +128,79 @@ export function HighlightForm({
       <div className="space-y-3">
         {highlights.map((h) => (
           <div key={h.id} className="p-4 border rounded-lg space-y-2 relative group">
-            <div className="flex items-start justify-between gap-2">
-              <blockquote className="text-sm italic text-foreground/80 flex-1">
-                {h.page_number && (
-                  <span className="text-xs font-medium text-primary mr-2 not-italic">
-                    p.{h.page_number}
-                  </span>
+            {editingId === h.id ? (
+              <div className="space-y-2">
+                <Input
+                  placeholder="페이지 번호"
+                  value={editPage}
+                  onChange={(e) => setEditPage(e.target.value)}
+                  type="number"
+                  className="w-28 h-7 text-xs"
+                />
+                <Textarea
+                  value={editContent}
+                  onChange={(e) => setEditContent(e.target.value)}
+                  rows={3}
+                  className="text-sm"
+                />
+                <Textarea
+                  placeholder="나의 감상 (선택)"
+                  value={editNote}
+                  onChange={(e) => setEditNote(e.target.value)}
+                  rows={2}
+                  className="text-xs"
+                />
+                <div className="flex gap-2">
+                  <Button
+                    size="sm"
+                    onClick={() => saveEdit(h.id)}
+                    disabled={editLoading || !editContent.trim()}
+                  >
+                    <Check className="h-3 w-3 mr-1" />
+                    저장
+                  </Button>
+                  <Button size="sm" variant="outline" onClick={cancelEdit} disabled={editLoading}>
+                    <X className="h-3 w-3 mr-1" />
+                    취소
+                  </Button>
+                </div>
+              </div>
+            ) : (
+              <>
+                <div className="flex items-start justify-between gap-2">
+                  <blockquote className="text-sm italic text-foreground/80 flex-1">
+                    {h.page_number && (
+                      <span className="text-xs font-medium text-primary mr-2 not-italic">
+                        p.{h.page_number}
+                      </span>
+                    )}
+                    {h.content}
+                  </blockquote>
+                  <div className="flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity shrink-0">
+                    <Button
+                      size="icon"
+                      variant="ghost"
+                      className="h-6 w-6"
+                      onClick={() => startEdit(h)}
+                    >
+                      <Pencil className="h-3 w-3" />
+                    </Button>
+                    <Button
+                      size="icon"
+                      variant="ghost"
+                      className="h-6 w-6"
+                      onClick={() => handleDelete(h.id)}
+                    >
+                      <Trash2 className="h-3 w-3" />
+                    </Button>
+                  </div>
+                </div>
+                {h.note && (
+                  <p className="text-xs text-muted-foreground pl-2 border-l-2 border-primary/30">
+                    {h.note}
+                  </p>
                 )}
-                {h.content}
-              </blockquote>
-              <Button
-                size="icon"
-                variant="ghost"
-                className="h-6 w-6 opacity-0 group-hover:opacity-100 transition-opacity shrink-0"
-                onClick={() => handleDelete(h.id)}
-              >
-                <Trash2 className="h-3 w-3" />
-              </Button>
-            </div>
-            {h.note && (
-              <p className="text-xs text-muted-foreground pl-2 border-l-2 border-primary/30">
-                {h.note}
-              </p>
+              </>
             )}
           </div>
         ))}

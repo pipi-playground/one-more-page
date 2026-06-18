@@ -6,7 +6,7 @@ import { supabase, UserBook } from '@/lib/supabase'
 import { useUser } from '@/hooks/use-user'
 import { ChatInterface } from '@/components/chat/chat-interface'
 import { Button } from '@/components/ui/button'
-import { ChevronLeft, Loader2 } from 'lucide-react'
+import { ChevronLeft } from 'lucide-react'
 import Link from 'next/link'
 
 export default function ChatPage() {
@@ -27,16 +27,6 @@ export default function ChatPage() {
     })()
   }, [userId, id])
 
-  if (!userBook) {
-    return (
-      <div className="flex items-center justify-center h-full p-8">
-        <Loader2 className="h-6 w-6 animate-spin" />
-      </div>
-    )
-  }
-
-  const book = userBook.book!
-
   return (
     // 모바일: 하단 바(4rem) 제외한 높이, 데스크탑: 전체 화면 높이
     <div className="flex flex-col h-[calc(100dvh-4rem)] md:h-screen overflow-hidden">
@@ -46,14 +36,55 @@ export default function ChatPage() {
             <ChevronLeft className="h-4 w-4" />
           </Button>
         </Link>
-        <div>
-          <h1 className="font-bold text-base line-clamp-1">{book.title}</h1>
-          <p className="text-xs text-muted-foreground">AI 독서 친구와 토론하기</p>
-        </div>
+        {userBook ? (
+          <div>
+            <h1 className="font-bold text-base line-clamp-1">{userBook.book!.title}</h1>
+            <p className="text-xs text-muted-foreground">AI 독서 친구와 토론하기</p>
+          </div>
+        ) : (
+          <div className="space-y-1.5">
+            <div className="h-4 w-40 bg-muted animate-pulse rounded" />
+            <div className="h-3 w-28 bg-muted animate-pulse rounded" />
+          </div>
+        )}
       </div>
 
       <div className="flex-1 min-h-0 overflow-hidden px-4 pb-4 max-w-3xl mx-auto w-full">
-        <ChatInterface book={book} userBookId={id} />
+        {userBook ? (
+          <ChatInterface book={userBook.book!} userBookId={id} />
+        ) : (
+          <div className="flex flex-col h-full">
+            <div className="flex-1 space-y-4 pr-4 pt-2">
+              <div className="flex justify-start gap-2">
+                <div className="w-8 h-8 rounded-full bg-muted animate-pulse shrink-0 mt-1" />
+                <div className="space-y-2 max-w-[60%]">
+                  <div className="h-4 bg-muted animate-pulse rounded-2xl rounded-tl-sm w-48" />
+                  <div className="h-4 bg-muted animate-pulse rounded w-36" />
+                  <div className="h-3 bg-muted animate-pulse rounded w-16" />
+                </div>
+              </div>
+              <div className="flex justify-end">
+                <div className="space-y-2 max-w-[60%]">
+                  <div className="h-4 bg-muted animate-pulse rounded-2xl rounded-tr-sm w-40" />
+                  <div className="h-3 bg-muted animate-pulse rounded w-12 ml-auto" />
+                </div>
+              </div>
+              <div className="flex justify-start gap-2">
+                <div className="w-8 h-8 rounded-full bg-muted animate-pulse shrink-0 mt-1" />
+                <div className="space-y-2 max-w-[70%]">
+                  <div className="h-4 bg-muted animate-pulse rounded-2xl rounded-tl-sm w-56" />
+                  <div className="h-4 bg-muted animate-pulse rounded w-44" />
+                  <div className="h-4 bg-muted animate-pulse rounded w-32" />
+                  <div className="h-3 bg-muted animate-pulse rounded w-16" />
+                </div>
+              </div>
+            </div>
+            <div className="border-t pt-4 flex gap-2">
+              <div className="flex-1 h-16 bg-muted animate-pulse rounded-md" />
+              <div className="w-10 h-16 bg-muted animate-pulse rounded-md" />
+            </div>
+          </div>
+        )}
       </div>
     </div>
   )
