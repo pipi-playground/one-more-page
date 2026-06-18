@@ -29,7 +29,7 @@ export default function ChatPage() {
 
   return (
     // 모바일: 하단 바(4rem) 제외한 높이, 데스크탑: 전체 화면 높이
-    <div className="flex flex-col h-[calc(100dvh-4rem)] md:h-screen overflow-hidden">
+    <div className="flex flex-col h-[calc(100dvh-4.5rem-env(safe-area-inset-bottom))] md:h-screen overflow-hidden">
       <div className="flex items-center gap-2 px-4 pt-4 pb-3 border-b shrink-0">
         <Link href={`/books/${id}`}>
           <Button variant="ghost" size="icon" className="h-8 w-8">

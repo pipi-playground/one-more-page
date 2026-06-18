@@ -17,24 +17,24 @@ export function BottomNav() {
   const pathname = usePathname()
 
   return (
-    <nav className="fixed bottom-0 left-0 right-0 z-50 bg-background border-t border-border md:hidden">
-      <div className="flex items-center justify-around h-16">
+    <nav className="fixed bottom-0 left-0 right-0 z-50 bg-background border-t border-border md:hidden" style={{ paddingBottom: 'env(safe-area-inset-bottom)' }}>
+      <div className="flex items-center justify-around h-[4.5rem]">
         {navItems.map(({ href, label, icon: Icon }) => {
           const active = pathname === href
           return (
             <Link
               key={href}
               href={href}
-              className="flex flex-col items-center gap-0.5 px-3 py-2 min-w-[56px]"
+              className="flex flex-col items-center gap-1 px-3 py-2 min-w-[56px]"
             >
               <div className={cn(
-                'flex items-center justify-center w-10 h-6 rounded-full transition-colors',
+                'flex items-center justify-center w-12 h-7 rounded-full transition-colors',
                 active ? 'text-primary' : 'text-muted-foreground'
               )}>
-                <Icon className={cn('h-5 w-5', active && 'stroke-[2.5]')} />
+                <Icon className={cn('h-6 w-6', active && 'stroke-[2.5]')} />
               </div>
               <span className={cn(
-                'text-[10px] transition-colors',
+                'text-[11px] transition-colors',
                 active ? 'text-primary font-semibold' : 'text-muted-foreground'
               )}>
                 {label}
