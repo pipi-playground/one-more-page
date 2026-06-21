@@ -6,13 +6,7 @@
 
 ---
 
-## 🔗 바로가기
-
-| 항목 | 링크 |
-|------|------|
-| 프로덕션 | TBD |
-| 디자인 (Figma) | TBD |
-| DB 스키마 (Supabase) | TBD |
+🔗 **[한장더 바로가기](https://one-more-page-one.vercel.app/)**
 
 ---
 
