@@ -35,16 +35,14 @@ export default function DashboardPage() {
   }, [userId])
 
   useEffect(() => {
-    if (!userId) return
     ;(async () => {
       const res = await fetch('/api/highlights/public')
       if (res.ok) {
         const data = await res.json()
-        const others = (data as PublicHighlight[]).filter((h) => h.user_id !== userId)
-        setPublicHighlights(others)
+        setPublicHighlights(data as PublicHighlight[])
       }
     })()
-  }, [userId])
+  }, [])
 
   const handleCheckIn = async () => {
     await checkIn()
@@ -139,21 +137,21 @@ export default function DashboardPage() {
         </div>
       )}
 
-      {publicHighlights.length > 0 && (
+      {publicHighlights.filter((h) => h.user_id !== userId).length > 0 && (
         <div>
           <div className="flex items-center justify-between mb-4">
             <div>
               <h2 className="font-semibold text-lg">독자들의 하이라이트</h2>
               <p className="text-xs text-muted-foreground mt-0.5">다른 독자들이 공유한 인상 깊은 구절</p>
             </div>
-            {publicHighlights.length > 5 && (
+            {publicHighlights.filter((h) => h.user_id !== userId).length > 5 && (
               <Link href="/highlights">
                 <Button variant="ghost" size="sm">더보기</Button>
               </Link>
             )}
           </div>
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-            {publicHighlights.slice(0, 5).map((h) => (
+            {publicHighlights.filter((h) => h.user_id !== userId).slice(0, 5).map((h) => (
               <Card key={h.id} className="overflow-hidden">
                 <div className="bg-primary/5 border-b px-4 py-3">
                   <p className="font-semibold text-sm leading-snug line-clamp-1">{h.book.title}</p>
