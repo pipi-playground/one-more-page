@@ -1,17 +1,7 @@
-import https from 'node:https'
-
-export function aladinFetch(url: URL): Promise<string> {
-  return new Promise((resolve, reject) => {
-    https.get(
-      { hostname: url.hostname, path: url.pathname + url.search, rejectUnauthorized: false },
-      (res) => {
-        let body = ''
-        res.on('data', (chunk: Buffer) => (body += chunk.toString()))
-        res.on('end', () => resolve(body))
-        res.on('error', reject)
-      }
-    ).on('error', reject)
-  })
+export async function aladinFetch(url: URL): Promise<string> {
+  const res = await fetch(url.toString())
+  if (!res.ok) throw new Error(`Aladin API error: ${res.status}`)
+  return res.text()
 }
 
 export function parseAladinResponse(raw: string) {

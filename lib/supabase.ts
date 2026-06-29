@@ -61,7 +61,16 @@ export type Highlight = {
   page_number: number | null
   content: string
   note: string | null
+  is_public: boolean
   created_at: string
+}
+
+export type PublicHighlight = Highlight & {
+  book: {
+    title: string
+    author: string | null
+    cover_url: string | null
+  }
 }
 
 export type ChatMessage = {

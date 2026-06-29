@@ -1,7 +1,7 @@
 'use client'
 
 import { useEffect, useState } from 'react'
-import { supabase, UserBook } from '@/lib/supabase'
+import { supabase, UserBook, PublicHighlight } from '@/lib/supabase'
 import { useUser } from '@/hooks/use-user'
 import { useStreak } from '@/hooks/use-streak'
 import { StreakDisplay } from '@/components/attendance/streak-display'
@@ -12,11 +12,13 @@ import { Separator } from '@/components/ui/separator'
 import { CheckCircle2, BookOpen, Search } from 'lucide-react'
 import Link from 'next/link'
 import { toast } from 'sonner'
+import { formatDate } from '@/lib/utils'
 
 export default function DashboardPage() {
   const userId = useUser()
   const { goal, loading, checkedIn, checkIn } = useStreak(userId)
   const [recentBooks, setRecentBooks] = useState<UserBook[]>([])
+  const [publicHighlights, setPublicHighlights] = useState<PublicHighlight[]>([])
 
   useEffect(() => {
     if (!userId) return
@@ -29,6 +31,18 @@ export default function DashboardPage() {
         .order('created_at', { ascending: false })
         .limit(4)
       if (data) setRecentBooks(data as UserBook[])
+    })()
+  }, [userId])
+
+  useEffect(() => {
+    if (!userId) return
+    ;(async () => {
+      const res = await fetch('/api/highlights/public')
+      if (res.ok) {
+        const data = await res.json()
+        const others = (data as PublicHighlight[]).filter((h) => h.user_id !== userId)
+        setPublicHighlights(others)
+      }
     })()
   }, [userId])
 
@@ -122,6 +136,48 @@ export default function DashboardPage() {
           <Link href="/books/search">
             <Button className="mt-2">첫 번째 책 추가하기</Button>
           </Link>
+        </div>
+      )}
+
+      {publicHighlights.length > 0 && (
+        <div>
+          <div className="flex items-center justify-between mb-4">
+            <div>
+              <h2 className="font-semibold text-lg">독자들의 하이라이트</h2>
+              <p className="text-xs text-muted-foreground mt-0.5">다른 독자들이 공유한 인상 깊은 구절</p>
+            </div>
+            {publicHighlights.length > 5 && (
+              <Link href="/highlights">
+                <Button variant="ghost" size="sm">더보기</Button>
+              </Link>
+            )}
+          </div>
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+            {publicHighlights.slice(0, 5).map((h) => (
+              <Card key={h.id} className="overflow-hidden">
+                <div className="bg-primary/5 border-b px-4 py-3">
+                  <p className="font-semibold text-sm leading-snug line-clamp-1">{h.book.title}</p>
+                  <p className="text-xs text-muted-foreground mt-0.5">{h.book.author}</p>
+                </div>
+                <CardContent className="pt-3 pb-4 space-y-2">
+                  <div className="flex items-center gap-2 text-xs text-muted-foreground">
+                    {h.page_number && (
+                      <span className="font-medium text-primary">p.{h.page_number}</span>
+                    )}
+                    <span>{formatDate(h.created_at)}</span>
+                  </div>
+                  <blockquote className="text-sm italic leading-relaxed text-foreground/80 line-clamp-3">
+                    {h.content}
+                  </blockquote>
+                  {h.note && (
+                    <p className="text-xs text-muted-foreground pl-2 border-l-2 border-primary/30 line-clamp-2">
+                      {h.note}
+                    </p>
+                  )}
+                </CardContent>
+              </Card>
+            ))}
+          </div>
         </div>
       )}
     </div>

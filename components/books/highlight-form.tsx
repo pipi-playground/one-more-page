@@ -7,7 +7,7 @@ import { Textarea } from '@/components/ui/textarea'
 import { supabase, Highlight } from '@/lib/supabase'
 import { useUser } from '@/hooks/use-user'
 import { toast } from 'sonner'
-import { Plus, Trash2, Pencil, Check, X } from 'lucide-react'
+import { Plus, Trash2, Pencil, Check, X, Globe, Lock } from 'lucide-react'
 
 export function HighlightForm({
   bookId,
@@ -22,12 +22,14 @@ export function HighlightForm({
   const [content, setContent] = useState('')
   const [note, setNote] = useState('')
   const [page, setPage] = useState('')
+  const [isPublic, setIsPublic] = useState(false)
   const [loading, setLoading] = useState(false)
 
   const [editingId, setEditingId] = useState<string | null>(null)
   const [editContent, setEditContent] = useState('')
   const [editNote, setEditNote] = useState('')
   const [editPage, setEditPage] = useState('')
+  const [editIsPublic, setEditIsPublic] = useState(false)
   const [editLoading, setEditLoading] = useState(false)
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -41,6 +43,7 @@ export function HighlightForm({
       content: content.trim(),
       note: note.trim() || null,
       page_number: page ? parseInt(page) : null,
+      is_public: isPublic,
     })
 
     if (error) {
@@ -50,6 +53,7 @@ export function HighlightForm({
       setContent('')
       setNote('')
       setPage('')
+      setIsPublic(false)
       onAdded()
     }
     setLoading(false)
@@ -66,6 +70,7 @@ export function HighlightForm({
     setEditContent(h.content)
     setEditNote(h.note ?? '')
     setEditPage(h.page_number ? String(h.page_number) : '')
+    setEditIsPublic(h.is_public ?? false)
   }
 
   const cancelEdit = () => {
@@ -81,6 +86,7 @@ export function HighlightForm({
         content: editContent.trim(),
         note: editNote.trim() || null,
         page_number: editPage ? parseInt(editPage) : null,
+        is_public: editIsPublic,
       })
       .eq('id', id)
 
@@ -119,10 +125,24 @@ export function HighlightForm({
           onChange={(e) => setNote(e.target.value)}
           rows={2}
         />
-        <Button type="submit" size="sm" disabled={loading || !content.trim()}>
-          <Plus className="h-4 w-4 mr-1" />
-          추가하기
-        </Button>
+        <div className="flex items-center justify-between">
+          <button
+            type="button"
+            onClick={() => setIsPublic((v) => !v)}
+            className={`flex items-center gap-1.5 text-xs px-2 py-1 rounded-md border transition-colors ${
+              isPublic
+                ? 'border-primary/50 text-primary bg-primary/5'
+                : 'border-input text-muted-foreground'
+            }`}
+          >
+            {isPublic ? <Globe className="h-3 w-3" /> : <Lock className="h-3 w-3" />}
+            {isPublic ? '공개' : '비공개'}
+          </button>
+          <Button type="submit" size="sm" disabled={loading || !content.trim()}>
+            <Plus className="h-4 w-4 mr-1" />
+            추가하기
+          </Button>
+        </div>
       </form>
 
       <div className="space-y-3">
@@ -150,19 +170,33 @@ export function HighlightForm({
                   rows={2}
                   className="text-xs"
                 />
-                <div className="flex gap-2">
-                  <Button
-                    size="sm"
-                    onClick={() => saveEdit(h.id)}
-                    disabled={editLoading || !editContent.trim()}
+                <div className="flex items-center justify-between">
+                  <button
+                    type="button"
+                    onClick={() => setEditIsPublic((v) => !v)}
+                    className={`flex items-center gap-1.5 text-xs px-2 py-1 rounded-md border transition-colors ${
+                      editIsPublic
+                        ? 'border-primary/50 text-primary bg-primary/5'
+                        : 'border-input text-muted-foreground'
+                    }`}
                   >
-                    <Check className="h-3 w-3 mr-1" />
-                    저장
-                  </Button>
-                  <Button size="sm" variant="outline" onClick={cancelEdit} disabled={editLoading}>
-                    <X className="h-3 w-3 mr-1" />
-                    취소
-                  </Button>
+                    {editIsPublic ? <Globe className="h-3 w-3" /> : <Lock className="h-3 w-3" />}
+                    {editIsPublic ? '공개' : '비공개'}
+                  </button>
+                  <div className="flex gap-2">
+                    <Button
+                      size="sm"
+                      onClick={() => saveEdit(h.id)}
+                      disabled={editLoading || !editContent.trim()}
+                    >
+                      <Check className="h-3 w-3 mr-1" />
+                      저장
+                    </Button>
+                    <Button size="sm" variant="outline" onClick={cancelEdit} disabled={editLoading}>
+                      <X className="h-3 w-3 mr-1" />
+                      취소
+                    </Button>
+                  </div>
                 </div>
               </div>
             ) : (
