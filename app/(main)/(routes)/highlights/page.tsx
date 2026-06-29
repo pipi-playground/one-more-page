@@ -3,9 +3,8 @@
 import { useEffect, useState } from 'react'
 import { PublicHighlight } from '@/lib/supabase'
 import { useUser } from '@/hooks/use-user'
-import { Card, CardContent } from '@/components/ui/card'
 import { Loader2 } from 'lucide-react'
-import { formatDate } from '@/lib/utils'
+import { PublicHighlightCard } from '@/components/highlights/public-highlight-card'
 
 export default function PublicHighlightsPage() {
   const userId = useUser()
@@ -47,32 +46,8 @@ export default function PublicHighlightsPage() {
             <PublicHighlightCard key={h.id} highlight={h} />
           ))}
         </div>
+
       )}
     </div>
-  )
-}
-
-function PublicHighlightCard({ highlight: h }: { highlight: PublicHighlight }) {
-  return (
-    <Card className="flex flex-col gap-0 overflow-hidden">
-      <div className="bg-primary/5 border-b px-4 py-3">
-        <p className="font-semibold text-sm leading-snug line-clamp-1">{h.book.title}</p>
-        <p className="text-xs text-muted-foreground mt-0.5">{h.book.author}</p>
-      </div>
-      <CardContent className="pt-4 pb-4 space-y-2 flex-1">
-        <div className="flex items-center gap-2 text-xs text-muted-foreground">
-          {h.page_number && <span className="font-medium text-primary">p.{h.page_number}</span>}
-          <span>{formatDate(h.created_at)}</span>
-        </div>
-        <blockquote className="text-sm italic leading-relaxed text-foreground/80 line-clamp-4">
-          {h.content}
-        </blockquote>
-        {h.note && (
-          <p className="text-xs text-muted-foreground pl-2 border-l-2 border-primary/30 line-clamp-2">
-            {h.note}
-          </p>
-        )}
-      </CardContent>
-    </Card>
   )
 }

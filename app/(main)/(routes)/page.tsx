@@ -12,7 +12,7 @@ import { Separator } from '@/components/ui/separator'
 import { CheckCircle2, BookOpen, Search } from 'lucide-react'
 import Link from 'next/link'
 import { toast } from 'sonner'
-import { formatDate } from '@/lib/utils'
+import { PublicHighlightCard } from '@/components/highlights/public-highlight-card'
 
 export default function DashboardPage() {
   const userId = useUser()
@@ -152,28 +152,7 @@ export default function DashboardPage() {
           </div>
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
             {publicHighlights.filter((h) => h.user_id !== userId).slice(0, 5).map((h) => (
-              <Card key={h.id} className="overflow-hidden">
-                <div className="bg-primary/5 border-b px-4 py-3">
-                  <p className="font-semibold text-sm leading-snug line-clamp-1">{h.book.title}</p>
-                  <p className="text-xs text-muted-foreground mt-0.5">{h.book.author}</p>
-                </div>
-                <CardContent className="pt-3 pb-4 space-y-2">
-                  <div className="flex items-center gap-2 text-xs text-muted-foreground">
-                    {h.page_number && (
-                      <span className="font-medium text-primary">p.{h.page_number}</span>
-                    )}
-                    <span>{formatDate(h.created_at)}</span>
-                  </div>
-                  <blockquote className="text-sm italic leading-relaxed text-foreground/80 line-clamp-3">
-                    {h.content}
-                  </blockquote>
-                  {h.note && (
-                    <p className="text-xs text-muted-foreground pl-2 border-l-2 border-primary/30 line-clamp-2">
-                      {h.note}
-                    </p>
-                  )}
-                </CardContent>
-              </Card>
+              <PublicHighlightCard key={h.id} highlight={h} />
             ))}
           </div>
         </div>
